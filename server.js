@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 
+
 const app = express()
 app.use(express.json())
 app.use(
@@ -17,7 +18,7 @@ const inputModel = "tts-1"; // https://platform.openai.com/docs/guides/text-to-s
 
 app.post("/synthesize", async (req, res) => {
     const text = req.body.text
-    const apiKey = "dummy"
+    const apiKey = "dummy" //process.env.REACT_APP_OPENAI_API_KEY
     const endpoint = "https://api.openai.com/v1/audio/speech"
     // Request body 
     const payload = {
@@ -27,11 +28,22 @@ app.post("/synthesize", async (req, res) => {
         response_format: "mp3",
     }
 
+    const headers = {
+        Authorization: `Bearer ${secretKey}`, // API key for authentication
+      };
+
     const response = await axios.post(endpoint, payload, {
         headers: headers,
         responseType: "stream",
       })
-    res.json(response.data)
+    //res.json(response.data)
+
+    // Configure speaker settings
+    const speaker = new Speaker({
+        channels: 2, // Stereo audio
+        bitDepth: 16,
+        sampleRate: 44100,
+        });
 })
 
 const_posrt = 3001
