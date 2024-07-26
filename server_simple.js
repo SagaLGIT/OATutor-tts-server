@@ -2,6 +2,7 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+require('dotenv').config();
 
 const Speaker = require('speaker');
 const ffmpeg = require('fluent-ffmpeg');
@@ -25,7 +26,7 @@ app.post("/synthesize", async (req, res) => {  // listens for HTTP POST requests
     console.log(req.body.text)
 
     const text = req.body.text
-    const apiKey = "dummy" //process.env.REACT_APP_OPENAI_API_KEY
+    const apiKey = process.env.REACT_APP_OPENAI_API_KEY
     const endpoint = "https://api.openai.com/v1/audio/speech"
     
     const payload = {
