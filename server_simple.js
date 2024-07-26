@@ -3,6 +3,10 @@ const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 
+const Speaker = require('speaker');
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require("ffmpeg-static");
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 const app = express()
 app.use(express.json()) // automatically parses incoming requests with JSON payloads
@@ -14,11 +18,50 @@ app.use(
     )
 )
 
+const inputVoice = "echo"; // https://platform.openai.com/docs/guides/text-to-speech/voice-options
+const inputModel = "tts-1"; // https://platform.openai.com/docs/guides/text-to-speech/audio-quality
+
 app.post("/synthesize", async (req, res) => {  // listens for HTTP POST requests at the /synthesize URL path
     console.log(req.body.text)
+
     const text = req.body.text
+    const apiKey = "dummy" //process.env.REACT_APP_OPENAI_API_KEY
+    const endpoint = "https://api.openai.com/v1/audio/speech"
+    
+    const payload = {
+        model: inputModel,
+        input: text,
+        voice: inputVoice,
+        response_format: "mp3",
+    }
+
+    const headers = {
+        Authorization: `Bearer ${apiKey}`, // API key for authentication
+      };
+
     try {
-        res.json("Recieved"); // response.data->"Revieced" Represents the response object that will be sent back to the client. You use this to send data or status codes back in the response.
+        // Make a POST request to the OpenAI API
+        const response = await axios.post(endpoint, payload, {
+            headers: headers,
+            responseType: "stream",
+        })
+
+        // Configure speaker settings
+        const speaker = new Speaker({
+            channels: 2, 
+            bitDepth: 16,
+            sampleRate: 44100,
+        });
+
+        // Convert the response to the desired audio format and play it
+        ffmpeg(response.data)
+        .toFormat("s16le")
+        .audioChannels(2)
+        .audioFrequency(44100)
+        .pipe(speaker);
+
+        // Send back confirmation
+        res.json("Recieved");
     }
     catch (error) {
         console.log(error);
