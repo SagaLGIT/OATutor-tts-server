@@ -6,6 +6,7 @@ require('dotenv').config();
 
 const Speaker = require('speaker');
 const { PassThrough } = require('stream');
+const { BufferListStream } = require('bl');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require("ffmpeg-static");
 ffmpeg.setFfmpegPath(ffmpegPath);
@@ -43,35 +44,56 @@ async function TTS(text) {
     });
 
     return response;
+}
+
+function playAudioStream(response) {
     
+    return new Promise((resolve, reject) => {  // resolving the promise when the Speaker has finished playing
+        const audioStream = new PassThrough();
+        response.data.pipe(audioStream);
+        const speaker = new Speaker({
+            channels: 2, 
+            bitDepth: 16,
+            sampleRate: 44100,
+        });
+
+        const bufferedStream = new BufferListStream();
+        audioStream.pipe(bufferedStream);
+
+        bufferedStream.on('finish', () => {
+            const playbackStream = new PassThrough();
+            playbackStream.end(bufferedStream.slice());
+            
+            // Convert the response to the desired audio format and play it
+            ffmpeg(playbackStream)
+            .toFormat("s16le")
+            .audioChannels(2)
+            .audioFrequency(44100)
+            .pipe(speaker)
+            .on('finish', resolve) // when finished spoken => resolved => return to for loop for next sentence
+            .on('error', reject);
+        });
+    });
 }
         
 
 app.post("/synthesize", async (req, res) => {  // listens for HTTP POST requests at the /synthesize URL path
     const text = req.body.text
     console.log(text)
-    
-    const speaker = new Speaker({
-        channels: 2, 
-        bitDepth: 16,
-        sampleRate: 44100,
-    });
 
     try{
+        // process all POST requests first
         const promises = text.map(text => TTS(text));
         const responses = await Promise.all(promises);
-            
-        // Convert the response to the desired audio format and play it
-        for (const response of responses){
-            
-            ffmpeg(response.data)
-            .toFormat("s16le")
-            .audioChannels(2)
-            .audioFrequency(44100)
-            .pipe(speaker);
+
+        // play them one by one 
+        for (const response of responses) {
+            await playAudioStream(response);
+            console.log("Finished playing audio");
+            res.json("Recieved");
         }
         // Send back confirmation
-        res.json("Recieved");
+        
     }
     catch(error){
         console.log(error);
