@@ -1,4 +1,6 @@
-/* Just establishing connection between the frontend and the backend */
+/* Recieves text from the frontend, sends it to OpenAI API, 
+recieves mp3 file, and returns it to frontend. */
+
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
@@ -47,6 +49,7 @@ async function TTS(text) {
 }
 
 function playAudioStream(response) {
+    // takes in mp3 and plays it
     
     return new Promise((resolve, reject) => {  // resolving the promise when the Speaker has finished playing
         const audioStream = new PassThrough();
@@ -86,14 +89,15 @@ app.post("/synthesize", async (req, res) => {  // listens for HTTP POST requests
         const promises = text.map(text => TTS(text));
         const responses = await Promise.all(promises);
 
-        // play them one by one 
+        // frontend - send over all responses
         for (const response of responses) {
-            await playAudioStream(response);
+            await playAudioStream(response);        
             console.log("Finished playing audio");
-            res.json("Recieved");
+            // SEND MESSAGE TO FRONTEND HERE 
         }
-        // Send back confirmation
         
+        // Send back mp3 files
+        res.json(responses);
     }
     catch(error){
         console.log(error);

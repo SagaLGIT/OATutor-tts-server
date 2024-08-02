@@ -1,4 +1,4 @@
-/* Just establishing connection between the frontend and the backend */
+/* Just establishing connection between the frontend and the backend, works for full hints not paced */
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
@@ -41,25 +41,25 @@ app.post("/synthesize", async (req, res) => {  // listens for HTTP POST requests
       };
 
     try {
-        // // Make a POST request to the OpenAI API
-        // const response = await axios.post(endpoint, payload, {
-        //     headers: headers,
-        //     responseType: "stream",
-        // })
+        // Make a POST request to the OpenAI API
+        const response = await axios.post(endpoint, payload, {
+            headers: headers,
+            responseType: "stream",
+        })
 
-        // // Configure speaker settings
-        // const speaker = new Speaker({
-        //     channels: 2, 
-        //     bitDepth: 16,
-        //     sampleRate: 44100,
-        // });
+        // Configure speaker settings
+        const speaker = new Speaker({
+            channels: 2, 
+            bitDepth: 16,
+            sampleRate: 44100,
+        });
 
-        // // Convert the response to the desired audio format and play it
-        // ffmpeg(response.data)
-        // .toFormat("s16le")
-        // .audioChannels(2)
-        // .audioFrequency(44100)
-        // .pipe(speaker);
+        // Convert the response to the desired audio format and play it
+        ffmpeg(response.data)
+        .toFormat("s16le")
+        .audioChannels(2)
+        .audioFrequency(44100)
+        .pipe(speaker);
 
         // Send back confirmation
         res.json("Recieved");
