@@ -68,6 +68,7 @@ function playAudioStream(response) {
             playbackStream.end(bufferedStream.slice());
             
             // Convert the response to the desired audio format and play it
+            console.log("Start playing audio");
             ffmpeg(playbackStream)
             .toFormat("s16le")
             .audioChannels(2)
@@ -92,12 +93,12 @@ app.post("/synthesize", async (req, res) => {  // listens for HTTP POST requests
         // frontend - send over all responses
         for (const response of responses) {
             await playAudioStream(response);        
-            console.log("Finished playing audio");
-            // SEND MESSAGE TO FRONTEND HERE 
+            // SEND MESSAGE IN FRONTEND HERE 
         }
         
         // Send back mp3 files
-        res.json(responses);
+        // res.send(responses);
+        res.json("Recieved");
     }
     catch(error){
         console.log(error);
