@@ -62,7 +62,11 @@ app.post("/synthesize", async (req, res) => {  // listens for HTTP POST requests
         .pipe(speaker);
 
         // Send back confirmation
-        res.json("Recieved");
+        response.data.on('end', () => {
+            console.log('Stream ended');
+        });
+        res.setHeader('Content-Type', 'audio/mpeg');
+        response.data.pipe(res);
     }
     catch (error) {
         console.log(error);

@@ -90,14 +90,12 @@ app.post("/synthesize", async (req, res) => {  // listens for HTTP POST requests
         const promises = text.map(text => TTS(text));
         const responses = await Promise.all(promises);
 
-        // frontend - send over all responses
         for (const response of responses) {
             await playAudioStream(response);        
-            // SEND MESSAGE IN FRONTEND HERE 
+            // SEND MESSAGE IN FRONTEND HERE: Toggle
+            // conditional for pausing
         }
-        
-        // Send back mp3 files
-        // res.send(responses);
+
         res.json("Recieved");
     }
     catch(error){
