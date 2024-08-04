@@ -34,9 +34,11 @@ io.on('connection', (socket) => {
       const promises = data.map(text => retrieveTts(text));
       const responses = await Promise.all(promises);
 
+      var i = 0;
       for (const response of responses) {
           await playAudio(response);
-          socket.send('One hint played');        
+          socket.emit('message', i);     // need to add more listeners
+          i = i + 1;
           // SEND MESSAGE IN FRONTEND HERE: Toggle
           // conditional for pausing
       }
