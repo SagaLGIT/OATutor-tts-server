@@ -51,8 +51,6 @@ class AudioServer {
 
       socket.on('reload', () => { // not working fully
         console.log('RELOAD received');
-        this.isPaused = true;
-        stopAudio();
         // this.isPaused = false;
         // this.startingIndex = 0;
         // if (!this.isPlaying){
@@ -76,6 +74,8 @@ class AudioServer {
             // process all tts sentences first
             const promises = data.map(text => retrieveTts(text));
             this.responses = await Promise.all(promises);
+
+            // play audio from the starting
             this.startingIndex = 0;
             await this.playFromIndex(this.startingIndex);
             this.isPlaying = false; // done playing
@@ -105,6 +105,7 @@ class AudioServer {
           this.io.emit('message', i+1); // Send toggle msg to frontend
         }
       }
+      this.io.emit('finish');
       this.isPlaying = false; // reset when done
       this.isPaused = false; 
     } catch (error) {
