@@ -27,14 +27,16 @@ io.on('connection', (socket) => {
 
   var isPlaying = false; // should not play over existing audio
   var isPaused = false;
+  var startingIndex = 0;
 
   socket.on('pause', () => {
     console.log('PAUSE received');
     isPaused = true;
   });
 
-  socket.on('play', () => {
-    console.log('PLAY  received');
+  socket.on('play', (hintIndex) => {
+    console.log('PLAY  received at ' + hintIndex);
+    startingIndex = hintIndex;
     isPaused = false;
   });
 
@@ -53,12 +55,16 @@ io.on('connection', (socket) => {
         var i = 1;
         for (const response of responses) {
             if (isPaused) {
+                isPlaying = false;
+                responses = responses.slice(startingIndex)
                 break;
             }
-            await playAudio(response);
-            console.log('sending msg ' + i)
-            socket.emit('message', i);      // sends toggle msg to frontend 
-            i = i + 1;
+            else {
+              await playAudio(response); // can I add a pause to playAudio?
+              console.log('sending msg ' + i)
+              socket.emit('message', i);      // sends toggle msg to frontend 
+              i = i + 1;
+            }
             // conditional for canceling
         }
         isPlaying = false; // done playing
@@ -83,6 +89,27 @@ server.listen(PORT, () => {
 });
 
 
+async function playFromIndex(index, responses) {
+  try {
+      for (let i = index; i < responses.length; i++) {
+          if (isPaused) {
+              isPlaying = false;
+              startingIndex = i;
+              return; // Exit the loop if paused
+          } else {
+              await playAudio(responses[i]); // Play the audio from the current index
+              console.log(`sending msg ${i + 1}`);
+              io.emit('message', `${i + 1} hint played`); // Send toggle msg to frontend
+          }
+      }
+      isPlaying = false; // Reset the isPlaying flag when done
+      isPaused = false; // Reset the isPaused flag
+  } catch (error) {
+      console.log(error);
+      isPlaying = false; // Reset the isPlaying flag on error
+      isPaused = false; // Reset the isPaused flag on error
+  }
+}
 
 
 
@@ -91,6 +118,7 @@ server.listen(PORT, () => {
 // have hints spoken sentence by sentence (done)
 
 // toggle the borders of the expressions (done)
+// still toggles one to much when pausing
 
 // not play over existing audio (in progress)
 
