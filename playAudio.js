@@ -5,6 +5,7 @@ const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require("ffmpeg-static");
 ffmpeg.setFfmpegPath(ffmpegPath);
 
+let currentSpeaker = null; // Reference to the current speaker
 
 function playAudio(response) {
     // takes in mp3 and plays it
@@ -17,6 +18,8 @@ function playAudio(response) {
             bitDepth: 16,
             sampleRate: 44100,
         });
+
+        currentSpeaker = speaker;
 
         const bufferedStream = new BufferListStream();
         audioStream.pipe(bufferedStream);
@@ -37,4 +40,13 @@ function playAudio(response) {
     });
 }
 
-module.exports = playAudio;
+function stopAudio() {
+    console.log("Stop playing audio");
+    if (currentSpeaker) {
+        currentSpeaker.end(); // Stop the speaker
+        currentSpeaker = null; // Clear the reference
+    }
+}
+
+
+module.exports = { playAudio, stopAudio };
