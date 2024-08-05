@@ -25,31 +25,50 @@ app.use(express.json());
 io.on('connection', (socket) => {
   console.log('A user connected');
 
+  var isPlaying = false; // should not play over existing audio
+  var isPaused = false;
+
+  socket.on('pause', () => {
+    console.log('PAUSE received');
+    isPaused = true;
+  });
+
+  socket.on('play', () => {
+    console.log('PLAY  received');
+    isPaused = false;
+  });
+
   // Listen for a message from the client
   socket.on('sendMessage', async (data) => {
     console.log('Message from client:', data);
-
-    try{
-      // process all tts sentences first
-      const promises = data.map(text => retrieveTts(text));
-      const responses = await Promise.all(promises);
-
-      var i = 0;
-      for (const response of responses) {
-          await playAudio(response);
-          socket.emit('message', i);     // need to add more listeners
-          i = i + 1;
-          // SEND MESSAGE IN FRONTEND HERE: Toggle
-          // conditional for pausing
-      }
-  }
-  catch(error){
-      console.log(error);
-  }
-
-    // Send a message back to the client
     
-  });
+    if (!isPlaying) {
+      isPlaying = true;
+      isPaused = false;
+      try{
+        // process all tts sentences first
+        const promises = data.map(text => retrieveTts(text));
+        const responses = await Promise.all(promises);
+
+        var i = 1;
+        for (const response of responses) {
+            if (isPaused) {
+                break;
+            }
+            await playAudio(response);
+            console.log('sending msg ' + i)
+            socket.emit('message', i);      // sends toggle msg to frontend 
+            i = i + 1;
+            // conditional for canceling
+        }
+        isPlaying = false; // done playing
+    }
+    catch(error){
+        console.log(error);
+    };
+  }
+
+});
 
   // Handle disconnection
   socket.on('disconnect', () => {
@@ -69,8 +88,10 @@ server.listen(PORT, () => {
 
 // establish correct connections with websocket
 
-// have hints spoken sentence by sentence
+// have hints spoken sentence by sentence (done)
 
-// toggle the borders of the expressions
+// toggle the borders of the expressions (done)
 
-// lastly play / pause functionality
+// not play over existing audio (in progress)
+
+// lastly play / pause functionality 
